@@ -1,8 +1,8 @@
-# TreeView Implementation
+# TreeView implementation
 
 Create sidebar views for your VS Code extension.
 
-## package.json Configuration
+## package.json configuration
 
 ```json
 {
@@ -34,7 +34,7 @@ Create sidebar views for your VS Code extension.
 | `test`     | Testing sidebar         |
 | Custom ID  | Activity bar (new icon) |
 
-## TreeDataProvider Implementation
+## TreeDataProvider implementation
 
 ```typescript
 import * as vscode from "vscode";
@@ -104,7 +104,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 Use `registerTreeDataProvider` instead when you don't need a `TreeView` handle; don't register both for the same view.
 
-## Item Customization
+## Item customization
 
 ```typescript
 class MyItem extends vscode.TreeItem {
@@ -132,7 +132,7 @@ class MyItem extends vscode.TreeItem {
 }
 ```
 
-## Context Menu
+## Context menu
 
 ```json
 {

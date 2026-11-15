@@ -1,8 +1,8 @@
-# Webview Implementation
+# Webview implementation
 
 Create rich HTML-based UI panels in VS Code.
 
-## Basic Webview Panel
+## Basic webview panel
 
 ```typescript
 import * as vscode from "vscode";
@@ -28,7 +28,7 @@ export function createWebviewPanel(context: vscode.ExtensionContext) {
 }
 ```
 
-## HTML Content
+## HTML content
 
 ```typescript
 function getWebviewContent(
@@ -98,9 +98,9 @@ function getNonce(): string {
 - Escape `<`, U+2028/2029 before embedding to keep the script tag valid.
 - Keep the CSP nonce on the executable script only.
 
-## Message Passing
+## Message passing
 
-### Extension → Webview
+### Extension to webview
 
 ```typescript
 // In extension
@@ -117,7 +117,7 @@ window.addEventListener("message", (event) => {
 });
 ```
 
-### Webview → Extension
+### Webview to extension
 
 ```javascript
 // In webview
@@ -143,7 +143,7 @@ panel.webview.onDidReceiveMessage(
 );
 ```
 
-## State Persistence
+## State persistence
 
 ```javascript
 // In webview - save state
@@ -157,7 +157,7 @@ if (state) {
 }
 ```
 
-## VS Code Theme Integration
+## VS Code theme integration
 
 Use CSS variables for consistent theming:
 
@@ -183,7 +183,7 @@ button:hover {
 }
 ```
 
-## Sidebar Webview (WebviewViewProvider)
+## Sidebar webview (WebviewViewProvider)
 
 For webviews in the sidebar instead of editor panels:
 
@@ -218,14 +218,14 @@ context.subscriptions.push(
 }
 ```
 
-## Fallback Patterns
+## Fallback patterns
 
-### Promise-based Callback Fallback
+### Promise-based callback fallback
 
 When using Promise-based callbacks (e.g., `resolveCreate`), always provide a fallback mechanism:
 
 ```typescript
-// ❌ Bad: Single callback dependency
+// Bad: Single callback dependency
 case "createTask": {
   if (!resolveCreate) {
     return; // Silent failure if callback not set
@@ -234,7 +234,7 @@ case "createTask": {
   break;
 }
 
-// ✅ Good: Fallback to alternative handler
+// Good: Fallback to alternative handler
 case "createTask": {
   const result = buildResult(data);
   if (resolveCreate) {
@@ -252,12 +252,12 @@ case "createTask": {
 
 Use the public API declarations from the `vscode` type package and set `engines.vscode` to the oldest version your extension supports. Avoid internal APIs, type casts that bypass the API types, and catch-all fallbacks that hide failures. If an optional capability is unavailable, expose that state clearly and log unexpected errors.
 
-### Path Consistency
+### Path consistency
 
 When handling both local and global paths, use consistent format:
 
 ```typescript
-// ❌ Bad: Mixed path formats
+// Bad: Mixed path formats
 templates.push({
   source: "local",
   path: relativePath, // Relative
@@ -267,7 +267,7 @@ templates.push({
   path: file.fsPath, // Absolute - inconsistent!
 });
 
-// ✅ Good: Consistent relative paths
+// Good: Consistent relative paths
 templates.push({
   source: "local",
   path: path.relative(workspaceRoot, file.fsPath).replace(/\\/g, "/"),
@@ -278,7 +278,7 @@ templates.push({
 });
 ```
 
-## Reliable Webview Communication
+## Reliable webview communication
 
 Register the host message handler before the webview can send its ready message. Post initial data only after the webview has installed its listener:
 
@@ -304,7 +304,7 @@ vscode.postMessage({ type: "webviewReady" });
 
 Use a ready message only when the host needs to send data after the webview initializes. Keep the protocol small and handle malformed or unexpected messages explicitly.
 
-### Debugging Tips
+### Debugging tips
 
 1. **Host logs vs Webview logs are separate**
    - Extension host: console.log() appears in Debug Console
@@ -322,34 +322,34 @@ Use a ready message only when the host needs to send data after the webview init
    - Open Webview Developer Tools
    - Look for CSP violation errors in Console
 
-## Webview JavaScript Anti-Patterns
+## Webview JavaScript anti-patterns
 
 Webviews run in modern Chromium, so ES6+ features (arrow functions, `const`/`let`, default parameters) are fully supported. The following patterns address real webview-specific pitfalls.
 
-### 1. Always Check for null
+### 1. Check for null
 
 `getElementById` can return null. Always perform a null check:
 
 ```javascript
-// ❌ Bad: No null check
+// Bad: No null check
 document.getElementById("my-input").value = "xxx";
 
-// ✅ Good: With null check
+// Good: With null check
 var element = document.getElementById("my-input");
 if (element) element.value = "xxx";
 ```
 
-### 2. Prefer Event Delegation
+### 2. Prefer event delegation
 
 Direct event registration on dynamically rendered NodeLists can fail. Use event delegation instead:
 
 ```javascript
-// ❌ Bad: Direct event registration on NodeList
+// Bad: Direct event registration on NodeList
 document.querySelectorAll(".btn").forEach(function (btn) {
   btn.addEventListener("click", handleClick);
 });
 
-// ✅ Good: Event delegation
+// Good: Event delegation
 document.addEventListener("click", function (e) {
   var target = e.target;
   if (target && target.classList && target.classList.contains("btn")) {
@@ -359,17 +359,17 @@ document.addEventListener("click", function (e) {
 });
 ```
 
-### 3. Embed Initial Data
+### 3. Embed initial data
 
 Embed initial data directly when available instead of hardcoding "Loading...":
 
 ```typescript
-// ❌ Bad: Hardcoded loading state
+// Bad: Hardcoded loading state
 return `<select id="agent-select">
   <option value="">Loading...</option>
 </select>`;
 
-// ✅ Good: Embed initial data if available
+// Good: Embed initial data if available
 const options =
   agents.length > 0
     ? agents.map((a) => `<option value="${a.id}">${a.name}</option>`).join("")
@@ -377,10 +377,10 @@ const options =
 return `<select id="agent-select">${options}</select>`;
 ```
 
-### 4. Bundle Actions with data-action + Delegation
+### 4. Bundle actions with data-action and delegation
 
 ```javascript
-// ✅ Good: render attributes, delegate once
+// Render attributes and delegate once
 function renderTasks(tasks) {
   return tasks
     .map(function (task) {
@@ -406,26 +406,26 @@ document.addEventListener("click", function (e) {
 });
 ```
 
-- ❌ Avoid inline `onclick="..."` (prone to broken quotes and SyntaxErrors after minification).
-- ❌ Avoid TypeScript cast strings (`as HTMLElement` can leak into HTML and cause SyntaxErrors).
-- ✅ Always escape attributes and handle events via delegation.
+- Avoid inline `onclick="..."`; broken quotes can cause syntax errors.
+- Keep TypeScript casts such as `as HTMLElement` out of HTML.
+- Escape attributes and handle events via delegation.
 
-### 5. Post-Build HTML Sanity Check
+### 5. Check the HTML after building
 
 - Output a `debug-webview.html` at build time and open it in a browser/VS Code to check for SyntaxErrors.
 - Inspect the Webview Developer Tools Console for CSP violations, broken quotes, or `document.write` errors.
 - Manually test key interactions (tab switching, dropdowns, etc.) once and verify no errors appear in the log.
 
-## Double-Escaping Regex Literals
+## Double-escaping regex literals
 
 When writing regular expressions inside template literals, backslashes get stripped:
 
 ```typescript
-// ❌ Bad: Backslash gets stripped in template literal
+// Bad: Backslash gets stripped in template literal
 const html = `<script>var everyN = /^\*\/(\d+)$/.exec(minute);</script>`;
 // Result in browser: /^*/(\d+)$/ → SyntaxError: Nothing to repeat
 
-// ✅ Good: Double-escape backslashes
+// Good: Double-escape backslashes
 const html = `<script>var everyN = /^\\*\\/(\\d+)$/.exec(minute);</script>`;
 // Result in browser: /^\*\/(\d+)$/ → Works correctly
 ```
@@ -441,7 +441,7 @@ const html = `<script>var everyN = /^\\*\\/(\\d+)$/.exec(minute);</script>`;
 2. Look for `Invalid regular expression: /^*/: Nothing to repeat` in Console
 3. Check the regex in build output (`out/extension.js`)
 
-## Reacting to Configuration Changes
+## Reacting to configuration changes
 
 Pattern for immediately re-rendering the webview when settings (e.g. language) change:
 
@@ -477,15 +477,15 @@ static refreshLanguage(data: any[]): void {
 }
 ```
 
-## Moving Inline JS to an External File (Recommended)
+## Moving inline JavaScript to an external file
 
-Large inline `<script>` blocks inside TypeScript template literals are hard to edit,
-cause merge conflicts, and slow down the webview parse step. Prefer an external file.
+Large inline `<script>` blocks inside TypeScript template literals are hard to edit
+and can cause merge conflicts. Prefer an external file.
 
 ### Anti-pattern (inline)
 
 ```typescript
-// BAD – hundreds of lines of JS buried in a TS template literal
+// Bad: hundreds of lines of JavaScript buried in a TypeScript template literal
 return `<html>...
   <script nonce="${nonce}">
     // 1000 lines of JS here
@@ -504,7 +504,7 @@ my-extension/
 ```
 
 ```typescript
-// myWebview.ts – only the skeleton remains in TypeScript
+// myWebview.ts contains the HTML skeleton
 const scriptUri = webview.asWebviewUri(
   vscode.Uri.joinPath(extensionUri, "media", "webview.js"),
 );
@@ -537,7 +537,7 @@ this.panel = vscode.window.createWebviewPanel(
     localResourceRoots: [
       vscode.Uri.joinPath(extensionUri, "media"),  // JS / CSS
       vscode.Uri.joinPath(extensionUri, "images"), // icons
-      // ❌ Don't pass extensionUri directly – too broad
+      // Avoid passing extensionUri directly because it grants broader access.
     ],
   },
 );
@@ -556,7 +556,7 @@ function serializeForWebview(value: unknown): string {
 ```
 
 ```javascript
-// media/webview.js – read the injected data
+// Read the injected data in media/webview.js
 (function () {
   var vscode = acquireVsCodeApi();
   var initialData = {};

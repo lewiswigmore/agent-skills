@@ -1,4 +1,4 @@
-# Testing VS Code Extensions
+# Testing VS Code extensions
 
 Set up and run tests using @vscode/test-electron.
 
@@ -8,7 +8,7 @@ Set up and run tests using @vscode/test-electron.
 npm install -D @vscode/test-electron mocha @types/mocha glob
 ```
 
-## Project Structure
+## Project structure
 
 ```
 my-extension/
@@ -126,7 +126,7 @@ suite("Extension Test Suite", () => {
 });
 ```
 
-## package.json Scripts
+## package.json scripts
 
 ```json
 {
@@ -139,7 +139,7 @@ suite("Extension Test Suite", () => {
 }
 ```
 
-## Running Tests
+## Running tests
 
 ```bash
 # Run all tests
@@ -152,9 +152,9 @@ npm test
 # 4. Exit with result code
 ```
 
-## Common Test Patterns
+## Common test patterns
 
-### Testing with Documents
+### Testing with documents
 
 ```typescript
 test("Should modify document", async () => {
@@ -172,7 +172,7 @@ test("Should modify document", async () => {
 });
 ```
 
-### Testing Settings
+### Testing settings
 
 ```typescript
 test("Should read configuration", () => {
@@ -182,7 +182,7 @@ test("Should read configuration", () => {
 });
 ```
 
-### Waiting for Events
+### Waiting for events
 
 ```typescript
 test("Should handle file save", async () => {
@@ -202,7 +202,7 @@ test("Should handle file save", async () => {
 });
 ```
 
-## CI Integration
+## CI integration
 
 **.github/workflows/test.yml:**
 

@@ -1,8 +1,8 @@
-# VS Code AI Customization Guide
+# VS Code AI customization guide
 
 Use the customization that matches the job: instructions for conventions, prompts for repeatable requests, agents for a role, and skills for reusable task workflows.
 
-## File Types and Usage
+## File types and usage
 
 | File Type | Path/Naming Convention | Purpose | Scope |
 |-----------|----------------------|---------|-------|
@@ -28,9 +28,9 @@ Agent Skills became available experimentally in VS Code 1.108 (December 2025) an
 
 See the [Agent Skills guide](https://code.visualstudio.com/docs/agent-customization/agent-skills) for supported locations, format, and harness differences, and the [chatSkills contribution point](https://code.visualstudio.com/api/references/contribution-points#contributes.chatSkills) for extension packaging details.
 
-## Instructions File Format
+## Instructions file format
 
-### Header (YAML Frontmatter)
+### Header (YAML frontmatter)
 
 ```yaml
 ---
@@ -40,15 +40,15 @@ applyTo: "**/*.{ts,tsx,js,jsx}"  # Auto-apply glob pattern
 ---
 ```
 
-### Key Properties
+### Key properties
 
 | Property | Description |
 |----------|-------------|
 | `name` | Display name in UI (defaults to filename if unset) |
-| `description` | Description text |
+| `description` | When and why to use the instructions |
 | `applyTo` | Auto-apply glob pattern (manual attachment only if unset) |
 
-## VS Code Settings
+## VS Code settings
 
 `chat.instructionsFilesLocations` adds editor search locations. Prefer native harness folders for portability: the Copilot CLI and app don't inherit VS Code's editor settings.
 
@@ -61,7 +61,7 @@ applyTo: "**/*.{ts,tsx,js,jsx}"  # Auto-apply glob pattern
 }
 ```
 
-## Configurable Scenarios
+## Configurable scenarios
 
 | Scenario | Setting Key |
 |----------|------------|
@@ -71,12 +71,12 @@ applyTo: "**/*.{ts,tsx,js,jsx}"  # Auto-apply glob pattern
 
 These settings accept inline text or a Markdown file path. For harness-specific discovery and current deprecation details, use the [custom instructions reference](https://code.visualstudio.com/docs/agents/reference/custom-instructions-reference).
 
-## Custom Agent Format
+## Custom agent format
 
 ```markdown
 ---
 name: Code Reviewer
-description: Expert code reviewer
+description: Review code for bugs, security issues, and performance problems
 tools:
   - read
   - search
@@ -84,14 +84,11 @@ tools:
 
 # Code Reviewer Agent
 
-You are a senior code reviewer...
-
-## Your Role
-- Conduct thorough code reviews
-- Identify bugs, security issues, and performance problems
+Review the changes for bugs, security issues, and performance problems.
+Report actionable findings with file and line references.
 ```
 
-## Directory Structure Example
+## Directory structure example
 
 ```
 .github/
@@ -108,7 +105,7 @@ You are a senior code reviewer...
     └── planner.agent.md
 ```
 
-## Official Resources
+## Official resources
 
 | Resource | URL |
 |----------|-----|
@@ -122,5 +119,5 @@ You are a senior code reviewer...
 ## Tips
 
 - **Glob patterns**: `applyTo: "**/*.py"` applies only to Python files
-- **Generate command**: Use **Chat: Open Customizations** to create and manage instruction files
+- **Customizations**: Use **Chat: Open Customizations** to create and manage instruction files
 - **Sync**: Settings Sync covers Local user-profile instructions; keep project instruction files in source control
