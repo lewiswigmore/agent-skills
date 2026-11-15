@@ -1,24 +1,17 @@
 ---
 name: vscode-extension-guide-en
-description: "Build, test, package, and publish Visual Studio Code extensions. Use for extension APIs, webviews, TreeViews, Marketplace distribution, Copilot customizations, or extension troubleshooting. Includes current Agent Skills support and security guidance."
+description: "Build, test, package, and publish Visual Studio Code extensions. Use for extension APIs, webviews, TreeViews, Marketplace distribution, Copilot customizations, or extension troubleshooting."
 license: CC BY-NC-SA 4.0
 metadata:
   author: lewiswigmore
   original-author: yamapan (https://github.com/aktsmm)
 ---
 
-# VS Code Extension Guide
+# VS Code extension guide
 
-Create, develop, and publish VS Code extensions.
+Use the references below for extension APIs, testing, publishing, and troubleshooting.
 
-## When to Use
-
-- **VS Code extension**, **extension development**, **vscode plugin**
-- Creating a new VS Code extension from scratch
-- Adding commands, keybindings, or settings to an extension
-- Publishing to VS Code Marketplace
-
-## Quick Start
+## Quick start
 
 ```bash
 # Scaffold without a global install
@@ -29,18 +22,18 @@ mkdir my-extension && cd my-extension
 npm init -y && npm install -D typescript @types/vscode
 ```
 
-## Project Structure
+## Project structure
 
 ```
 my-extension/
-├── package.json          # Extension manifest (CRITICAL)
+├── package.json          # Extension manifest
 ├── src/extension.ts      # Entry point
 ├── out/                  # Compiled JS (gitignore)
 ├── images/icon.png       # At least 128x128 PNG for Marketplace
 └── .vscodeignore         # Exclude files from VSIX
 ```
 
-## Building & Packaging
+## Building and packaging
 
 ```bash
 npm run compile      # Build once
@@ -48,14 +41,14 @@ npm run watch        # Watch mode (F5 to launch debug)
 npx @vscode/vsce package   # Creates .vsix
 ```
 
-## Done Criteria
+## Done criteria
 
 - [ ] Extension activates without errors
 - [ ] All commands registered and working
 - [ ] Inspect VSIX contents with `npx @vscode/vsce ls` and confirm its size is appropriate
 - [ ] README.md includes Marketplace/GitHub links
 
-## Quick Troubleshooting
+## Quick troubleshooting
 
 | Symptom               | Fix |
 | --------------------- | --- |
@@ -63,6 +56,7 @@ npx @vscode/vsce package   # Creates .vsix
 | Command not found     | Match command ID in `package.json` and `registerCommand` |
 | Shortcut not working  | Check the `when` clause and keybinding conflicts |
 
+## References
 
 | Topic               | Reference                                                            |
 | ------------------- | -------------------------------------------------------------------- |
@@ -75,9 +69,9 @@ npx @vscode/vsce package   # Creates .vsix
 | Troubleshooting     | [references/troubleshooting.md](references/troubleshooting.md)       |
 | Extension management | [Install, disable, update, and manage extensions](https://code.visualstudio.com/docs/configure/extensions/extension-marketplace) |
 
-## Best Practices
+## Best practices
 
-### Naming Consistency
+### Naming consistency
 
 Unify package name, setting keys, command IDs, and view IDs before publishing:
 
@@ -88,7 +82,7 @@ Unify package name, setting keys, command IDs, and view IDs before publishing:
 | Command ID | `copilotScheduler.createTask` |
 | View ID | `copilotSchedulerTasks` |
 
-### Centralised Notification Handling
+### Centralised notification handling
 
 ```typescript
 type NotificationMode = "toast" | "silentStatus";

@@ -1,77 +1,61 @@
-# Code Review Prompts & Templates
+# Code review prompts and templates
 
-Code review prompt collection for VS Code / AI chat.
+Use these prompts and templates for code reviews in VS Code chat.
 
-## 6-Point Review Framework
+## Review checklist
 
-Six key areas to check during code review:
-
-| Area | What to Check |
+| Area | What to check |
 |------|---------------|
-| 🐛 **Bugs & Logic Errors** | Runtime errors, edge cases, null/undefined issues |
-| 🔒 **Security** | XSS, injection, sensitive data exposure |
-| ⚡ **Performance** | N+1 queries, unnecessary re-renders, memory leaks |
-| 📖 **Maintainability & Readability** | Naming, code structure, complexity |
-| 🧪 **Test Coverage** | Missing test cases |
-| 📚 **Documentation** | Comments, JSDoc, README updates |
+| Bugs and logic | Runtime errors, edge cases, null and undefined values |
+| Security | XSS, injection, sensitive data exposure |
+| Performance | N+1 queries, unnecessary re-renders, memory leaks |
+| Maintainability | Naming, code structure, complexity |
+| Tests | Missing test cases |
+| Documentation | Comments, JSDoc, README updates |
 
-## Structured Feedback Format
+## Feedback format
 
-Output review results in the following format:
+Classify findings by severity:
 
-- ❌ **Critical**: Must fix (required before merge)
-- ⚠️ **Warning**: Should fix (recommended)
-- 💡 **Suggestion**: Nice to have (improvement idea)
-- ✅ **Positive**: Good practice (praise)
+- Critical: Must fix before merge
+- Warning: Should fix
+- Suggestion: Optional improvement
 
 ---
 
-## Prompt Templates
+## Prompt templates
 
-### 1. Simple PR Review
-
-```markdown
-Please analyze the changes in this PR and focus on identifying critical issues:
-- Potential bugs or issues
-- Performance
-- Security
-- Correctness
-
-If critical issues are found, list them in a few short bullet points.
-If no critical issues are found, provide a simple approval.
-Sign off with: ✅ (approved) or ❌ (issues found).
-
-Keep response concise. Only highlight critical issues that must be addressed.
-```
-
-### 2. Comprehensive Code Review
+### 1. Simple PR review
 
 ```markdown
-You are a senior software engineer. Please review the following code thoroughly:
+Review the changes in this PR for critical correctness, security, and performance issues.
 
-## Checklist
-- 🐛 Potential bugs & edge cases
-- 🔒 Security vulnerabilities
-- ⚡ Performance issues
-- 📖 Readability & maintainability
-- 🧪 Test coverage
-- 📚 Documentation quality
-
-## Output Format
-- ❌ Critical: Must fix
-- ⚠️ Warning: Should fix
-- 💡 Suggestion: Improvement idea
-
-If issues are found, provide specific line numbers and suggested fixes.
+List must-fix issues with file and line references. If you find none, say so.
 ```
 
-### 3. Git Diff Review (Popular on Reddit)
+### 2. Comprehensive code review
 
 ```markdown
-Do a git diff and pretend you're a senior dev doing a code review
+Review the code for:
+
+- Bugs and edge cases
+- Security vulnerabilities
+- Performance issues
+- Maintainability
+- Missing tests
+- Documentation errors
+
+Classify findings as critical, warning, or suggestion. Include line references
+and suggested fixes.
 ```
 
-### 4. Security-Focused Review
+### 3. Git diff review
+
+```markdown
+Review the git diff for bugs and regressions. Report findings with line references.
+```
+
+### 4. Security-focused review
 
 ```markdown
 Review this code focusing exclusively on security vulnerabilities:
@@ -84,10 +68,10 @@ Review this code focusing exclusively on security vulnerabilities:
 6. **CSRF**: Check token validation
 7. **Dependencies**: Note any known vulnerable packages
 
-Rate severity: 🔴 Critical | 🟠 High | 🟡 Medium | 🟢 Low
+Rate severity as critical, high, medium, or low.
 ```
 
-### 5. TypeScript/React Focused
+### 5. TypeScript and React review
 
 ```markdown
 Review this TypeScript/React code for:
@@ -103,20 +87,20 @@ Provide specific fixes with code examples.
 
 ---
 
-## Instructions File Template
+## Instructions file template
 
 ### code-review.instructions.md
 
 ```markdown
 ---
 name: Code Review
-description: Expert code review guidelines
+description: Review code for bugs, security issues, and performance problems
 applyTo: "**/*.{ts,tsx,js,jsx,py}"
 ---
 
 # Code Review Instructions
 
-You are a senior software engineer conducting a thorough code review.
+Review the code using this checklist.
 
 ## Review Checklist
 1. **Bugs & Logic Errors**: Runtime errors, edge cases, null handling
@@ -127,53 +111,30 @@ You are a senior software engineer conducting a thorough code review.
 6. **Test Coverage**: Missing test cases
 
 ## Output Format
-- ❌ **Critical**: Must fix before merge
-- ⚠️ **Warning**: Should address
-- 💡 **Suggestion**: Nice to have
+- Critical: Must fix before merge
+- Warning: Should address
+- Suggestion: Optional improvement
 
 Keep feedback constructive and specific with line references.
 ```
 
 ---
 
-## Custom Agent Template
+## Custom agent template
 
 ### code-reviewer.agent.md
 
 ```markdown
 ---
 name: Code Reviewer
-description: Expert code reviewer for thorough PR analysis
+description: Review PR changes for bugs, security issues, and performance problems
 tools:
-  - codebase
-  - terminal
-  - githubRepo
+  - read
+  - search
 ---
 
 # Code Reviewer Agent
 
-You are a senior code reviewer with expertise in:
-- TypeScript/JavaScript
-- React/Next.js
-- Node.js backend
-- Testing best practices
-
-## Your Role
-- Conduct thorough code reviews
-- Identify bugs, security issues, and performance problems
-- Suggest improvements with concrete examples
-- Be constructive and educational
-
-## Review Process
-1. Understand the context and purpose of changes
-2. Check for bugs and edge cases
-3. Evaluate code quality and maintainability
-4. Verify test coverage
-5. Provide actionable feedback
-
-## Response Format
-- **Summary**: Brief overview of changes
-- **Critical Issues**: Must-fix items
-- **Suggestions**: Improvements to consider
-- **Positive Notes**: What was done well
+Review the changes for bugs, security issues, performance problems, and missing tests.
+Report actionable findings with line references and concrete fixes.
 ```

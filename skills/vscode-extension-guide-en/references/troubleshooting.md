@@ -2,7 +2,7 @@
 
 Common issues and solutions for VS Code extension development.
 
-## Extension Not Loading
+## Extension not loading
 
 | Symptom                     | Cause                      | Solution                                                         |
 | --------------------------- | -------------------------- | ---------------------------------------------------------------- |
@@ -15,7 +15,7 @@ Since VS Code 1.74, activation events for contributed commands and views are gen
 
 In VS Code 1.125, `extensions.autoUpdate` was simplified to `on` or `off`, and disabled extensions no longer update automatically until enabled. Check the current extension management guide before reusing older settings examples.
 
-### Debug Activation
+### Debug activation
 
 ```typescript
 // Add at top of activate()
@@ -25,7 +25,7 @@ vscode.window.showInformationMessage("Extension activated!");
 
 Check: **Help** → **Toggle Developer Tools** → **Console**
 
-## Command Not Found
+## Command not found
 
 | Symptom                   | Cause                        | Solution                                             |
 | ------------------------- | ---------------------------- | ---------------------------------------------------- |
@@ -33,7 +33,7 @@ Check: **Help** → **Toggle Developer Tools** → **Console**
 | Command not in palette    | Missing contributes.commands | Add command definition to package.json               |
 | Command defined but fails | Extension not activated      | Check the extension host; contributed commands auto-activate on VS Code 1.74+ |
 
-### Verify Command Registration
+### Verify command registration
 
 ```typescript
 // In activate()
@@ -44,7 +44,7 @@ console.log(
 );
 ```
 
-## Keyboard Shortcuts Not Working
+## Keyboard shortcuts not working
 
 | Symptom               | Cause                             | Solution                           |
 | --------------------- | --------------------------------- | ---------------------------------- |
@@ -52,7 +52,7 @@ console.log(
 | Works sometimes       | Context-dependent `when`          | Check active editor, focus state   |
 | Conflict with other   | Another extension/VS Code uses it | Use unique key combination         |
 
-### Check for Conflicts
+### Check for conflicts
 
 1. **Ctrl+K Ctrl+S** → Open Keyboard Shortcuts
 2. Search for your key combination
@@ -72,7 +72,7 @@ console.log(
 }
 ```
 
-## Packaging Issues
+## Packaging issues
 
 | Symptom               | Cause                  | Solution                                    |
 | --------------------- | ---------------------- | ------------------------------------------- |
@@ -80,7 +80,7 @@ console.log(
 | Files missing in VSIX | Over-aggressive ignore | Use `npx @vscode/vsce ls` to check          |
 | Icon not showing      | Wrong path or format   | Use a PNG at least 128x128, and check its path in package.json |
 
-### Inspect VSIX Contents
+### Inspect VSIX contents
 
 ```bash
 # List what will be packaged
@@ -90,7 +90,7 @@ npx @vscode/vsce ls
 unzip -l my-extension-1.0.0.vsix
 ```
 
-## Publishing Errors
+## Publishing errors
 
 | Symptom             | Cause                  | Solution                                 |
 | ------------------- | ---------------------- | ---------------------------------------- |
@@ -99,7 +99,7 @@ unzip -l my-extension-1.0.0.vsix
 | Version exists      | Already published      | Increment version number                 |
 | README not showing  | Wrong filename case    | Must be `README.md` not `README.MD`      |
 
-## Runtime Errors
+## Runtime errors
 
 | Symptom              | Cause                  | Solution                                            |
 | -------------------- | ---------------------- | --------------------------------------------------- |
@@ -107,7 +107,7 @@ unzip -l my-extension-1.0.0.vsix
 | API undefined        | Wrong VS Code version  | Check `engines.vscode` matches API used             |
 | Permission denied    | Restricted API         | Check extension permissions/capabilities            |
 
-### Check VS Code API Version
+### Check the VS Code API version
 
 ```json
 {
@@ -117,9 +117,9 @@ unzip -l my-extension-1.0.0.vsix
 }
 ```
 
-## Debug Tips
+## Debugging tips
 
-### Enable Verbose Logging
+### Enable verbose logging
 
 ```typescript
 const outputChannel = vscode.window.createOutputChannel("My Extension");
@@ -127,17 +127,17 @@ outputChannel.appendLine("Debug message");
 outputChannel.show();
 ```
 
-### Extension Host Logs
+### Extension host logs
 
 1. **Help** → **Toggle Developer Tools**
 2. **Console** tab
 3. Filter by your extension name
 
-### Reload Without Restart
+### Reload without restarting
 
 - **Ctrl+Shift+P** → "Developer: Reload Window"
 
-## Quick Fixes Summary
+## Quick fixes
 
 ```bash
 # Clean rebuild
@@ -154,7 +154,7 @@ code --install-extension ./extension-1.0.0.vsix
 npx @vscode/vsce ls
 ```
 
-## Blank Webview / SyntaxError
+## Blank webview or SyntaxError
 
 | Symptom | Cause | Solution |
 |---------|-------|----------|
@@ -163,21 +163,21 @@ npx @vscode/vsce ls
 | `Unexpected token` | Quotes broken during minification | Switch to `data-action` + event delegation pattern |
 | Button not responding | `onclick` lost after innerHTML | Use `document.addEventListener` with delegation |
 
-### Debugging Steps
+### Debugging steps
 
 1. Run **Developer: Open Webview Developer Tools**
 2. Check the Console tab for errors
 3. Search for the relevant line in build output `out/extension.js`
 4. Fix regex/quote issues in source and rebuild
 
-## Naming Mismatch
+## Naming mismatch
 
 | Symptom | Cause | Solution |
 |---------|-------|----------|
 | Setting has no effect | Setting key doesn't match code | Align package.json and `getConfiguration()` |
 | Command not found | Command ID doesn't match package.json | Use the same ID everywhere |
 
-### Naming Consistency Check
+### Naming consistency check
 
 ```bash
 # Extract command/setting keys from package.json
@@ -187,4 +187,4 @@ grep -E '"myExt\.' package.json
 grep -r "myExt\." src/
 ```
 
-公開前に統一することを強く推奨（公開後は既存ユーザーの設定が壊れる）。
+Align names before publishing. Changing setting keys later can break existing users' settings.

@@ -1,6 +1,6 @@
 # Publishing to Marketplace
 
-Complete guide for publishing your VS Code extension.
+Package and publish a VS Code extension to the Marketplace.
 
 ## Prerequisites
 
@@ -31,7 +31,7 @@ jobs:
       - run: npx @vscode/vsce publish --oidc
 ```
 
-## Creating a Publisher
+## Creating a publisher
 
 1. Go to [marketplace.visualstudio.com/manage](https://marketplace.visualstudio.com/manage)
 2. Sign in with your Microsoft account
@@ -53,18 +53,18 @@ npx @vscode/vsce publish --oidc
 
 For Azure Pipelines, use the Microsoft Entra ID flow documented in the [secure publishing guide](https://code.visualstudio.com/api/working-with-extensions/publishing-extension#publish-from-azure-pipelines-with-microsoft-entra-id). For interactive or other CI workflows, check the current authentication options in the official guide rather than copying a long-lived PAT into a script or environment.
 
-## Pre-publish Checklist
+## Pre-publish checklist
 
 | Item                        | Check                               |
 | --------------------------- | ----------------------------------- |
 | `publisher` in package.json | Matches your publisher ID           |
 | `version`                   | Incremented from previous           |
-| `README.md`                 | Exists (lowercase!) and has content |
+| `README.md`                 | Exists with that casing and has content |
 | `LICENSE`                   | Included                            |
 | `icon`                      | PNG at least 128x128, path in package.json |
 | `.vscodeignore`             | Excludes unnecessary files          |
 
-## package.json Requirements
+## package.json requirements
 
 ```json
 {
@@ -89,12 +89,12 @@ Use a value supported by the [`categories` manifest field](https://code.visualst
 
 ## Stable and pre-release versions
 
-- ✅ Valid: `1.0.0`, `1.2.3`, `0.0.1`
-- ❌ Invalid: `1.0.0-beta.1`, `1.0.0-rc1` (prerelease tags rejected)
+- Valid: `1.0.0`, `1.2.3`, `0.0.1`
+- Invalid: `1.0.0-beta.1`, `1.0.0-rc1` (prerelease tags rejected)
 - Publish a Marketplace pre-release channel with `npx @vscode/vsce publish --pre-release`; use a distinct numeric version from the stable release.
 - See the official [pre-release extension guidance](https://code.visualstudio.com/api/working-with-extensions/publishing-extension#pre-release-extensions) for version ordering and upgrade behavior.
 
-## Inspect Package Before Publishing
+## Inspect the package before publishing
 
 ```bash
 # List files that will be included
@@ -106,7 +106,7 @@ npx @vscode/vsce package
 
 ## .vscodeignore
 
-Minimize package size:
+Keep only files needed at runtime. Exclude `node_modules` only when runtime dependencies are bundled or otherwise included:
 
 ```ignore
 **
@@ -127,7 +127,7 @@ tsconfig*.json
 *.vsix
 ```
 
-## Updating Published Extensions
+## Updating published extensions
 
 ```bash
 # Increment version and publish
@@ -148,14 +148,14 @@ npx @vscode/vsce unpublish <publisher>.<extension> --version <version>
 npx @vscode/vsce unpublish <publisher>.<extension>
 ```
 
-## Common Errors
+## Common errors
 
 | Error                      | Cause                        | Fix                                |
 | -------------------------- | ---------------------------- | ---------------------------------- |
 | `Missing publisher`        | No publisher in package.json | Add `"publisher": "your-id"`       |
 | `Personal Access Token...` | Legacy PAT invalid or expired | Prefer Trusted Publishing or Entra ID; see the [authentication guide](https://code.visualstudio.com/api/working-with-extensions/publishing-extension#secure-automated-publishing-to-visual-studio-marketplace) |
 | `version already exists`   | Same version published       | Increment version number           |
-| `README not found`         | File missing or wrong case   | Create `README.md` (lowercase)     |
+| `README not found`         | File missing or wrong case   | Create `README.md` with that casing |
 | `invalid prerelease`       | SemVer suffix like `1.0.0-beta` | Use a numeric `x.y.z` version and pass `--pre-release` for the Marketplace pre-release channel |
 
 ## Marketplace URLs
@@ -164,9 +164,9 @@ npx @vscode/vsce unpublish <publisher>.<extension>
 - **Published extension**: `https://marketplace.visualstudio.com/items?itemName=<publisher>.<extension>`
 - **Statistics**: Available in manage portal after publish
 
-## .vscodeignore – Recommended Exclusion Patterns
+## Recommended .vscodeignore exclusions
 
-Keep the published VSIX small and free of dev-only artefacts:
+Exclude development files that the extension does not need at runtime:
 
 ```ignore
 # Source & config (already compiled to out/)
