@@ -5,19 +5,21 @@ Create sidebar views for your VS Code extension.
 ## package.json Configuration
 
 ```json
-"contributes": {
-  "viewsContainers": {
-    "activitybar": [{
-      "id": "myExtContainer",
-      "title": "My Extension",
-      "icon": "images/icon.svg"
-    }]
-  },
-  "views": {
-    "myExtContainer": [{
-      "id": "myExtView",
-      "name": "Items"
-    }]
+{
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [{
+        "id": "myExtContainer",
+        "title": "My Extension",
+        "icon": "images/icon.svg"
+      }]
+    },
+    "views": {
+      "myExtContainer": [{
+        "id": "myExtView",
+        "name": "Items"
+      }]
+    }
   }
 }
 ```
@@ -67,6 +69,10 @@ class MyTreeProvider implements vscode.TreeDataProvider<MyItem> {
     this._onDidChangeTreeData.fire(undefined);
   }
 
+  dispose(): void {
+    this._onDidChangeTreeData.dispose();
+  }
+
   getTreeItem(element: MyItem): vscode.TreeItem {
     return element;
   }
@@ -77,28 +83,26 @@ class MyTreeProvider implements vscode.TreeDataProvider<MyItem> {
 }
 ```
 
-## Registration in extension.ts
+## Register the view
 
 ```typescript
 export function activate(context: vscode.ExtensionContext) {
   const provider = new MyTreeProvider();
 
-  // Register provider
-  vscode.window.registerTreeDataProvider("myExtView", provider);
-
-  // Or use createTreeView for more control
-  const treeView = vscode.window.createTreeView("myExtView", {
+  // createTreeView registers the provider and returns a disposable view.
+  const treeView = vscode.window.createTreeView<MyItem>("myExtView", {
     treeDataProvider: provider,
     showCollapseAll: true,
   });
-  context.subscriptions.push(treeView);
+  context.subscriptions.push(provider, treeView);
 
-  // Refresh command
   context.subscriptions.push(
     vscode.commands.registerCommand("myExt.refresh", () => provider.refresh()),
   );
 }
 ```
+
+Use `registerTreeDataProvider` instead when you don't need a `TreeView` handle; don't register both for the same view.
 
 ## Item Customization
 
@@ -131,12 +135,14 @@ class MyItem extends vscode.TreeItem {
 ## Context Menu
 
 ```json
-"contributes": {
-  "menus": {
-    "view/item/context": [{
-      "command": "myExt.delete",
-      "when": "view == myExtView && viewItem == myItem"
-    }]
+{
+  "contributes": {
+    "menus": {
+      "view/item/context": [{
+        "command": "myExt.delete",
+        "when": "view == myExtView && viewItem == myItem"
+      }]
+    }
   }
 }
 ```

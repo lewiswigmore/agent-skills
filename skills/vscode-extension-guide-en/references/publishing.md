@@ -5,48 +5,53 @@ Complete guide for publishing your VS Code extension.
 ## Prerequisites
 
 1. **Publisher account** at [marketplace.visualstudio.com/manage](https://marketplace.visualstudio.com/manage)
-2. **Personal Access Token (PAT)** from Azure DevOps
-3. **vsce CLI** installed: `npm install -g @vscode/vsce`
+2. **vsce CLI**: use `npx @vscode/vsce` or install `@vscode/vsce`
+
+For CI publishing, prefer federated identity instead of a stored Personal Access Token (PAT). GitHub Actions supports Marketplace Trusted Publishing with OIDC; Azure Pipelines supports Microsoft Entra ID. Azure DevOps global PATs are scheduled for retirement on **December 1, 2026**. Follow the [current secure publishing guide](https://code.visualstudio.com/api/working-with-extensions/publishing-extension#secure-automated-publishing-to-visual-studio-marketplace) for setup and provider requirements.
+
+For GitHub Actions, create a Trusted Publishing policy, then grant the publishing job `id-token: write`:
+
+```yaml
+name: Publish extension
+on:
+  release:
+    types: [published]
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - run: npx @vscode/vsce publish --oidc
+```
 
 ## Creating a Publisher
 
 1. Go to [marketplace.visualstudio.com/manage](https://marketplace.visualstudio.com/manage)
-2. Sign in with Microsoft account
+2. Sign in with your Microsoft account
 3. Click "Create publisher"
 4. Fill in:
    - **ID**: Unique identifier (used in extension ID)
    - **Name**: Display name
    - **Description**: Optional
 
-## Getting Personal Access Token (PAT)
-
-1. Go to [dev.azure.com](https://dev.azure.com)
-2. Sign in → User Settings (top right) → **Personal access tokens**
-3. Click **New Token**
-4. Configure:
-   - **Name**: "VS Code Marketplace" (or any descriptive name)
-   - **Organization**: **All accessible organizations** ← Critical!
-   - **Expiration**: Up to 1 year
-   - **Scopes**: Custom defined → **Marketplace** → ✅ **Manage**
-5. Click **Create** and **copy token immediately** (shown only once)
-
-## Login and Publish
+## Package and publish
 
 ```bash
-# Login (first time or when token expires)
-npx @vscode/vsce login <publisher-id>
-# Paste PAT when prompted
+# Create a VSIX for local testing or distribution
+npx @vscode/vsce package
 
-# Verify login
-npx @vscode/vsce ls-publishers
-
-# Publish new version
-npx @vscode/vsce publish
-
-# Publish with version bump
-npx @vscode/vsce publish minor  # 0.1.0 → 0.2.0
-npx @vscode/vsce publish patch  # 0.1.0 → 0.1.1
+# Publish a new version using the configured trusted identity
+npx @vscode/vsce publish --oidc
 ```
+
+For Azure Pipelines, use the Microsoft Entra ID flow documented in the [secure publishing guide](https://code.visualstudio.com/api/working-with-extensions/publishing-extension#publish-from-azure-pipelines-with-microsoft-entra-id). For interactive or other CI workflows, check the current authentication options in the official guide rather than copying a long-lived PAT into a script or environment.
 
 ## Pre-publish Checklist
 
@@ -56,7 +61,7 @@ npx @vscode/vsce publish patch  # 0.1.0 → 0.1.1
 | `version`                   | Incremented from previous           |
 | `README.md`                 | Exists (lowercase!) and has content |
 | `LICENSE`                   | Included                            |
-| `icon`                      | 128x128 PNG, path in package.json   |
+| `icon`                      | PNG at least 128x128, path in package.json |
 | `.vscodeignore`             | Excludes unnecessary files          |
 
 ## package.json Requirements
@@ -78,20 +83,16 @@ npx @vscode/vsce publish patch  # 0.1.0 → 0.1.1
 }
 ```
 
-## Valid Categories
+## Manifest categories
 
-```
-Programming Languages, Snippets, Linters, Themes, Debuggers,
-Formatters, Keymaps, SCM Providers, Other, Extension Packs,
-Language Packs, Data Science, Machine Learning, Visualization,
-Notebooks, Education, Testing, AI, Chat
-```
+Use a value supported by the [`categories` manifest field](https://code.visualstudio.com/api/references/extension-manifest#fields), such as `Programming Languages`, `Snippets`, `Linters`, `Themes`, `Debuggers`, `Formatters`, `Keymaps`, `SCM Providers`, `Other`, `Extension Packs`, `Language Packs`, `Data Science`, `Machine Learning`, `Visualization`, `Notebooks`, `Education`, or `Testing`. Marketplace search filters may expose additional categories that aren't valid manifest values.
 
-## Version Constraints
+## Stable and pre-release versions
 
 - ✅ Valid: `1.0.0`, `1.2.3`, `0.0.1`
 - ❌ Invalid: `1.0.0-beta.1`, `1.0.0-rc1` (prerelease tags rejected)
-- Use GitHub Releases for beta distribution instead
+- Publish a Marketplace pre-release channel with `npx @vscode/vsce publish --pre-release`; use a distinct numeric version from the stable release.
+- See the official [pre-release extension guidance](https://code.visualstudio.com/api/working-with-extensions/publishing-extension#pre-release-extensions) for version ordering and upgrade behavior.
 
 ## Inspect Package Before Publishing
 
@@ -152,47 +153,16 @@ npx @vscode/vsce unpublish <publisher>.<extension>
 | Error                      | Cause                        | Fix                                |
 | -------------------------- | ---------------------------- | ---------------------------------- |
 | `Missing publisher`        | No publisher in package.json | Add `"publisher": "your-id"`       |
-| `Personal Access Token...` | PAT invalid or expired       | Regenerate PAT with correct scopes |
+| `Personal Access Token...` | Legacy PAT invalid or expired | Prefer Trusted Publishing or Entra ID; see the [authentication guide](https://code.visualstudio.com/api/working-with-extensions/publishing-extension#secure-automated-publishing-to-visual-studio-marketplace) |
 | `version already exists`   | Same version published       | Increment version number           |
 | `README not found`         | File missing or wrong case   | Create `README.md` (lowercase)     |
-| `invalid prerelease`       | Version like `1.0.0-beta`    | Use standard version format        |
+| `invalid prerelease`       | SemVer suffix like `1.0.0-beta` | Use a numeric `x.y.z` version and pass `--pre-release` for the Marketplace pre-release channel |
 
 ## Marketplace URLs
 
 - **Your extensions**: `https://marketplace.visualstudio.com/manage/publishers/<publisher-id>`
 - **Published extension**: `https://marketplace.visualstudio.com/items?itemName=<publisher>.<extension>`
 - **Statistics**: Available in manage portal after publish
-
-## PAT Security & Persistence
-
-### Persist VSCE_PAT safely (Windows)
-
-```powershell
-# 1. Set for the current terminal session (type directly – never paste into chat!)
-$env:VSCE_PAT = "<your-pat>"
-
-# 2. Persist to User environment variables (survives reboots)
-[Environment]::SetEnvironmentVariable("VSCE_PAT", $env:VSCE_PAT, "User")
-
-# 3. Verify without revealing the value
-if ($env:VSCE_PAT) { "present (length: $($env:VSCE_PAT.Length))" } else { "missing" }
-```
-
-> ⚠️ `SetEnvironmentVariable` does **not** update already-open terminals.
-> Open a new terminal (or restart VS Code) after persisting.
-
-### If the PAT was accidentally exposed
-
-1. **Revoke immediately** at `dev.azure.com` → User Settings → Personal access tokens → Revoke
-2. Generate a new token (same scopes)
-3. Update `VSCE_PAT` with the new value
-
-### Rules
-
-- ❌ Never paste a PAT into chat, issue comments, or commit messages
-- ❌ Never echo `$env:VSCE_PAT` – check existence/length only
-- ✅ Use `VSCE_PAT` env var; `vsce publish` picks it up automatically
-- ✅ Set expiry ≤ 1 year and rotate on a schedule
 
 ## .vscodeignore – Recommended Exclusion Patterns
 

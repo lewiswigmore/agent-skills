@@ -86,8 +86,8 @@ function getNonce(): string {
     try {
       var el = document.getElementById("initial-data");
       if (el && el.textContent) initialData = JSON.parse(el.textContent) || {};
-    } catch (e) {
-      initialData = {};
+    } catch (error) {
+      console.error("Could not parse initial webview data:", error);
     }
     // ... use initialData ...
   })();
@@ -196,20 +196,24 @@ class MyWebviewProvider implements vscode.WebviewViewProvider {
 }
 
 // Register in extension.ts
-vscode.window.registerWebviewViewProvider(
-  "myExtSidebarView",
-  new MyWebviewProvider(),
+context.subscriptions.push(
+  vscode.window.registerWebviewViewProvider(
+    "myExtSidebarView",
+    new MyWebviewProvider(),
+  ),
 );
 ```
 
 ```json
-"contributes": {
-  "views": {
-    "explorer": [{
-      "type": "webview",
-      "id": "myExtSidebarView",
-      "name": "My Webview"
-    }]
+{
+  "contributes": {
+    "views": {
+      "explorer": [{
+        "type": "webview",
+        "id": "myExtSidebarView",
+        "name": "My Webview"
+      }]
+    }
   }
 }
 ```
@@ -244,41 +248,9 @@ case "createTask": {
 }
 ```
 
-### VS Code Internal API Fallback
+### API compatibility
 
-When using internal/unstable APIs (`vscode.lm`, `vscode.chat`), always implement fallback:
-
-```typescript
-// ✅ Good: API availability check + fallback
-static async getAvailableModels(): Promise<Model[]> {
-  const models: Model[] = [{ id: "", name: "Default" }];
-
-  try {
-    if (typeof vscode.lm !== "undefined" && "selectChatModels" in vscode.lm) {
-      const available = await (vscode.lm as any).selectChatModels({});
-
-      // Null check for API result
-      if (available && Array.isArray(available)) {
-        for (const model of available) {
-          models.push({
-            id: model.id || model.family,
-            name: model.name || model.family || model.id,
-          });
-        }
-      }
-    }
-  } catch (error) {
-    console.log("API not available, using fallback", error);
-  }
-
-  // Return fallback if API returned nothing useful
-  if (models.length <= 1) {
-    return getFallbackModels();
-  }
-
-  return models;
-}
-```
+Use the public API declarations from the `vscode` type package and set `engines.vscode` to the oldest version your extension supports. Avoid internal APIs, type casts that bypass the API types, and catch-all fallbacks that hide failures. If an optional capability is unavailable, expose that state clearly and log unexpected errors.
 
 ### Path Consistency
 
@@ -306,108 +278,31 @@ templates.push({
 });
 ```
 
-## Reliable Webview Communication Pattern
+## Reliable Webview Communication
 
-### Recommended Pattern (Simple & Reliable)
+Register the host message handler before the webview can send its ready message. Post initial data only after the webview has installed its listener:
 
-Wrap the entire webview script in an IIFE and send webviewReady at the end:
+```typescript
+panel.webview.onDidReceiveMessage((message: { type?: string }) => {
+  if (message.type === "webviewReady") {
+    void panel.webview.postMessage({ type: "updateData", data: initialData });
+  }
+}, undefined, context.subscriptions);
+```
 
-` ypescript
-function getWebviewContent(): string {
-return <!DOCTYPE html>
+```javascript
+const vscode = acquireVsCodeApi();
 
-<html>
-<head>
-  <meta charset="UTF-8">
-  <meta http-equiv="Content-Security-Policy"
-        content="default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}';">
-</head>
-<body>
-  <div id="app"></div>
-  
-  <script nonce="${nonce}">
-    (function() {
-      const vscode = acquireVsCodeApi();
-      
-      // Initialize UI
-      // ... DOM setup ...
-      
-      // Handle messages from extension
-      window.addEventListener('message', event => {
-        const message = event.data;
-        switch (message.type) {
-          case 'updateData':
-            renderData(message.data);
-            break;
-        }
-      });
-      
-      // Initial render
-      renderUI();
-      
-      // Notify extension that webview is ready (LAST!)
-      vscode.postMessage({ type: 'webviewReady' });
-    })();
-  </script>
-</body>
-</html>;
-}
-`
-
-### Extension Side Handler
-
-`	ypescript
-panel.webview.onDidReceiveMessage(message => {
-  switch (message.type) {
-    case 'webviewReady':
-      console.log('[Extension] Webview reported ready');
-      webviewReady = true;
-      // Send initial data AFTER webview is ready
-      panel.webview.postMessage({
-        type: 'updateAgents',
-        agents: cachedAgents,
-      });
-      panel.webview.postMessage({
-        type: 'updateModels', 
-        models: cachedModels,
-      });
-      break;
+window.addEventListener("message", (event) => {
+  if (event.data.type === "updateData") {
+    renderData(event.data.data);
   }
 });
-`
 
-### ❌ Anti-Pattern: Complex Handshakes
+vscode.postMessage({ type: "webviewReady" });
+```
 
-Avoid adding complexity like ping/ACK/retry/fallback mechanisms:
-
-` ypescript
-// ❌ Bad: Overly complex handshake
-let webviewReadyAcked = false;
-let webviewReadyRetryTimer = null;
-let webviewReadyAttempts = 0;
-
-function startWebviewReadyHandshake() {
-sendWebviewReady();
-webviewReadyRetryTimer = setInterval(() => {
-if (webviewReadyAcked || webviewReadyAttempts >= 12) {
-clearInterval(webviewReadyRetryTimer);
-return;
-}
-sendWebviewReady(); // Retry
-}, 500);
-}
-
-// Host pings webview, webview responds, host ACKs...
-// This adds complexity and often fails in unexpected ways
-`
-
-**Why it fails:**
-
-- More moving parts = more failure modes
-- Race conditions between ping/ACK/retry timers
-- Fallback mechanisms mask the real problem
-
-**Simple pattern is best:** One webviewReady message at script end, host waits for it.
+Use a ready message only when the host needs to send data after the webview initializes. Keep the protocol small and handle malformed or unexpected messages explicitly.
 
 ### Debugging Tips
 
@@ -417,10 +312,10 @@ sendWebviewReady(); // Retry
    - Use Developer: Open Webview Developer Tools command
 
 2. **Verify script execution via message**
-   `javascript
-// First line after acquireVsCodeApi
-vscode.postMessage({ type: 'scriptStarted' });
-`
+
+   ```javascript
+   vscode.postMessage({ type: "scriptStarted" });
+   ```
    If host receives this, script is running. If not, check CSP/nonce.
 
 3. **Check CSP errors in Webview DevTools**
@@ -482,31 +377,7 @@ const options =
 return `<select id="agent-select">${options}</select>`;
 ```
 
-### 4. Async Fallbacks
-
-Always provide try/catch and fallback data for API calls:
-
-```typescript
-// ❌ Bad: No fallback
-async function getModels(): Promise<Model[]> {
-  return await vscode.lm.selectChatModels({});
-}
-
-// ✅ Good: With fallback
-async function getModels(): Promise<Model[]> {
-  try {
-    const models = await vscode.lm.selectChatModels({});
-    if (models && models.length > 0) {
-      return models;
-    }
-  } catch {
-    // API may not be available
-  }
-  return getFallbackModels();
-}
-```
-
-### 5. Bundle Actions with data-action + Delegation
+### 4. Bundle Actions with data-action + Delegation
 
 ```javascript
 // ✅ Good: render attributes, delegate once
@@ -539,7 +410,7 @@ document.addEventListener("click", function (e) {
 - ❌ Avoid TypeScript cast strings (`as HTMLElement` can leak into HTML and cause SyntaxErrors).
 - ✅ Always escape attributes and handle events via delegation.
 
-### 6. Post-Build HTML Sanity Check
+### 5. Post-Build HTML Sanity Check
 
 - Output a `debug-webview.html` at build time and open it in a browser/VS Code to check for SyntaxErrors.
 - Inspect the Webview Developer Tools Console for CSP violations, broken quotes, or `document.write` errors.
@@ -692,41 +563,13 @@ function serializeForWebview(value: unknown): string {
   try {
     var el = document.getElementById("initial-data");
     if (el) initialData = JSON.parse(el.textContent || "{}");
-  } catch (e) { /* ignore */ }
+  } catch (error) {
+    console.error("Could not parse initial webview data:", error);
+  }
   // … use initialData …
 })();
 ```
 
-## Prompting Reload After Extension Update
+## Extension updates
 
-Because `activationEvents: ["onStartupFinished"]` fires only once per VS Code
-startup, users who update the extension **without restarting VS Code** will keep
-running stale code. Show a "Reload Now" notification when the version changes.
-
-```typescript
-// extension.ts
-const LAST_VERSION_KEY = "lastKnownVersion";
-
-export function activate(context: vscode.ExtensionContext): void {
-  const currentVersion =
-    (context.extension.packageJSON as { version?: string }).version ?? "0.0.0";
-  const lastVersion = context.globalState.get<string>(LAST_VERSION_KEY);
-
-  if (lastVersion && lastVersion !== currentVersion) {
-    void vscode.window
-      .showInformationMessage(
-        `Extension updated to v${currentVersion}. Reload to activate.`,
-        "Reload Now",
-      )
-      .then((choice) => {
-        if (choice === "Reload Now") {
-          void vscode.commands.executeCommand("workbench.action.reloadWindow");
-        }
-      });
-  }
-  void context.globalState.update(LAST_VERSION_KEY, currentVersion);
-}
-```
-
-> **Why not `vscode.env.reload()`?** It reloads immediately without user consent.
-> The pattern above lets users finish their current work first.
+VS Code manages extension installation and updates, then prompts users to restart the extension host when an update needs to take effect. Avoid adding a separate version-check and reload prompt for ordinary extension updates; use the [current extension management guide](https://code.visualstudio.com/docs/configure/extensions/extension-marketplace) when troubleshooting update behavior.
