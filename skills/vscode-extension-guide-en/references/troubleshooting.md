@@ -6,9 +6,14 @@ Common issues and solutions for VS Code extension development.
 
 | Symptom                     | Cause                      | Solution                                                         |
 | --------------------------- | -------------------------- | ---------------------------------------------------------------- |
-| Extension never activates   | Missing `activationEvents` | Add to package.json: `"activationEvents": ["onStartupFinished"]` |
-| "Extension is not active"   | Wrong activation trigger   | Use `"*"` to always activate (dev only) or specific event        |
+| Extension never activates   | Missing or mismatched activation trigger | Check the manifest's `contributes` entry, `engines.vscode`, and the [activation event reference](https://code.visualstudio.com/api/references/activation-events); add only the event the extension actually needs |
+| "Extension is not active"   | Extension host or activation issue | Check the Extension Host log and use the narrowest applicable activation event |
 | Works in dev, not installed | Build output not included  | Check `.vscodeignore`, ensure `out/` is included                 |
+| Update not visible          | Auto-update is off/delayed, or extension host needs restart | Check `@updates` in the Extensions view, update manually if needed, and restart extensions when prompted; see [extension management](https://code.visualstudio.com/docs/configure/extensions/extension-marketplace) |
+
+Since VS Code 1.74, activation events for contributed commands and views are generated automatically. Don't add a broad `*` or `onStartupFinished` trigger just to compensate for a command that fails to activate.
+
+In VS Code 1.125, `extensions.autoUpdate` was simplified to `on` or `off`, and disabled extensions no longer update automatically until enabled. Check the current extension management guide before reusing older settings examples.
 
 ### Debug Activation
 
@@ -26,7 +31,7 @@ Check: **Help** → **Toggle Developer Tools** → **Console**
 | ------------------------- | ---------------------------- | ---------------------------------------------------- |
 | "command not found"       | ID mismatch                  | Ensure same ID in package.json and registerCommand() |
 | Command not in palette    | Missing contributes.commands | Add command definition to package.json               |
-| Command defined but fails | Extension not activated      | Check activationEvents includes the command          |
+| Command defined but fails | Extension not activated      | Check the extension host; contributed commands auto-activate on VS Code 1.74+ |
 
 ### Verify Command Registration
 
@@ -43,7 +48,7 @@ console.log(
 
 | Symptom               | Cause                             | Solution                           |
 | --------------------- | --------------------------------- | ---------------------------------- |
-| Shortcut does nothing | `when` clause too restrictive     | Remove or broaden `when` condition |
+| Shortcut does nothing | `when` clause doesn't match        | Check context keys and the active editor/focus state |
 | Works sometimes       | Context-dependent `when`          | Check active editor, focus state   |
 | Conflict with other   | Another extension/VS Code uses it | Use unique key combination         |
 
@@ -53,17 +58,18 @@ console.log(
 2. Search for your key combination
 3. Look for conflicts (multiple entries)
 
-### Common `when` Issues
+### Keybinding context example
 
 ```json
-// ❌ Doesn't work in editor
-"when": "!inputFocus"
-
-// ✅ Works everywhere
-"when": ""  // or omit entirely
-
-// ✅ Only in editor with text focus
-"when": "editorTextFocus"
+{
+  "contributes": {
+    "keybindings": [{
+      "key": "ctrl+alt+m",
+      "command": "myExt.open",
+      "when": "editorTextFocus"
+    }]
+  }
+}
 ```
 
 ## Packaging Issues
@@ -72,7 +78,7 @@ console.log(
 | --------------------- | ---------------------- | ------------------------------------------- |
 | VSIX too large        | node_modules included  | Add to .vscodeignore                        |
 | Files missing in VSIX | Over-aggressive ignore | Use `npx @vscode/vsce ls` to check          |
-| Icon not showing      | Wrong path or format   | Use 128x128 PNG, check path in package.json |
+| Icon not showing      | Wrong path or format   | Use a PNG at least 128x128, and check its path in package.json |
 
 ### Inspect VSIX Contents
 
@@ -88,7 +94,7 @@ unzip -l my-extension-1.0.0.vsix
 
 | Symptom             | Cause                  | Solution                                 |
 | ------------------- | ---------------------- | ---------------------------------------- |
-| PAT invalid         | Wrong scope or expired | Regenerate with Marketplace Manage scope |
+| PAT invalid         | Legacy PAT invalid or expired | Prefer Trusted Publishing or Entra ID; see [secure publishing](https://code.visualstudio.com/api/working-with-extensions/publishing-extension#secure-automated-publishing-to-visual-studio-marketplace) |
 | Publisher not found | ID mismatch            | Verify publisher ID matches exactly      |
 | Version exists      | Already published      | Increment version number                 |
 | README not showing  | Wrong filename case    | Must be `README.md` not `README.MD`      |
@@ -104,9 +110,10 @@ unzip -l my-extension-1.0.0.vsix
 ### Check VS Code API Version
 
 ```json
-// package.json - specify minimum VS Code version
-"engines": {
-  "vscode": "^1.80.0"
+{
+  "engines": {
+    "vscode": "^1.80.0"
+  }
 }
 ```
 

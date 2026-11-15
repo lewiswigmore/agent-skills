@@ -56,7 +56,7 @@ async function main() {
       // launchArgs: ['--disable-extensions', path.resolve(__dirname, '../../test-workspace')],
     });
   } catch (err) {
-    console.error("Failed to run tests");
+    console.error("Failed to run tests:", err);
     process.exit(1);
   }
 }
