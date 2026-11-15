@@ -361,7 +361,7 @@ document.addEventListener("click", function (e) {
 
 ### 3. Embed Initial Data
 
-Don't hardcode "Loading..." — embed initial data directly when available:
+Embed initial data directly when available instead of hardcoding "Loading...":
 
 ```typescript
 // ❌ Bad: Hardcoded loading state
